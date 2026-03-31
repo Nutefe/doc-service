@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { createApp } from "./app";
-import { log } from "node:console";
+import { log } from "./utils/logger";
 
 dotenv.config();
 
