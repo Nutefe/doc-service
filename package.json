@@ -5,9 +5,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "node --watch dist/src/server.js",
-    "start": "node dist/src/server.js",
-    "start:worker": "node dist/worker/worker.js",
-    "benchmark": "node benchmark/test.js"
+    "start": "node dist/src/server.js"
   },
   "keywords": [],
   "author": "",
