@@ -8,7 +8,8 @@ import {
   batchProcessingDuration,
 } from "../../metrics/prometheus";
 import { tryFinalizeBatch } from "../../services/batch.service";
-import { ObjectId } from "mongodb";
+import { Document } from "../../models/document.model";
+import { Batch } from "../../models/batch.model";
 
 const breaker = new CircuitBreaker({
   failureThreshold: 5,
@@ -35,9 +36,9 @@ export async function processDocument(job: {
   const meta = { batchId, documentId, userId };
 
   await getDb()
-    .collection("documents")
+    .collection<Document>("documents")
     .updateOne(
-      { _id: new ObjectId(documentId) },
+      { _id: documentId },
       { $set: { status: "processing", updatedAt: new Date() } },
     );
 
@@ -53,16 +54,16 @@ export async function processDocument(job: {
     const gridFsFileId = await savePdf(documentId, pdfBytes);
 
     await getDb()
-      .collection("documents")
+      .collection<Document>("documents")
       .updateOne(
-        { _id: new ObjectId(documentId) },
+        { _id: documentId },
         { $set: { status: "completed", gridFsFileId, updatedAt: new Date() } },
       );
 
     await getDb()
-      .collection("batches")
+      .collection<Batch>("batches")
       .updateOne(
-        { _id: new ObjectId(batchId) },
+        { _id: batchId },
         { $inc: { completed: 1 }, $set: { updatedAt: new Date() } },
       );
 
@@ -72,16 +73,16 @@ export async function processDocument(job: {
     const err = String(e);
 
     await getDb()
-      .collection("documents")
+      .collection<Document>("documents")
       .updateOne(
-        { _id: new ObjectId(documentId) },
+        { _id: documentId },
         { $set: { status: "failed", error: err, updatedAt: new Date() } },
       );
 
     await getDb()
-      .collection("batches")
+      .collection<Batch>("batches")
       .updateOne(
-        { _id: new ObjectId(batchId) },
+        { _id: batchId },
         { $inc: { failed: 1 }, $set: { updatedAt: new Date() } },
       );
 

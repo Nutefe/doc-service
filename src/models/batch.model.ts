@@ -10,4 +10,5 @@ export interface Batch {
   updatedAt: Date;
   startedAt?: Date;
   finishedAt?: Date;
+  requestId?: string;
 }

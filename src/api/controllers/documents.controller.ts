@@ -18,6 +18,7 @@ export async function postBatch(req: Request, res: Response) {
     });
 
   const batchId = await createBatch(parsed.data.userIds, requestId(req));
+
   log("info", "batch_created", { batchId, requestId: requestId(req) });
 
   res.status(202).json({ batchId });

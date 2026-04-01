@@ -6,6 +6,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
+COPY worker ./worker
 RUN npm run build
 
 FROM node:22-alpine AS doc-service
@@ -18,3 +19,13 @@ COPY --from=base /app/dist ./dist
 EXPOSE 3000
 ENTRYPOINT ["/sbin/tini","--"]
 CMD ["node","dist/src/server.js"]
+
+FROM node:22-alpine AS worker
+WORKDIR /app
+RUN apk add --no-cache tini
+ENV NODE_ENV=production
+COPY --from=base /app/package.json /app/package-lock.json* ./
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/dist ./dist
+ENTRYPOINT ["/sbin/tini","--"]
+CMD ["node","dist/worker/worker.js"]
