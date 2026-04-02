@@ -9,7 +9,13 @@ export async function startBullWorker(redisUrl: string, concurrency: number) {
   const w = new Worker(
     "documents",
     async (job) => {
-      await processDocument(job.data as any);
+      await processDocument(
+        job.data as unknown as {
+          batchId: string;
+          documentId: string;
+          userId: string;
+        },
+      );
     },
     { connection: conn, concurrency },
   );

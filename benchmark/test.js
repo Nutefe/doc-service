@@ -6,8 +6,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
   const userIds = Array.from({ length: 10 }, (_, i) => `user-${i + 1}`);
-  const cpuStart = process.cpuUsage();
-  const memStart = process.memoryUsage();
+  const cpuStart = process.cpuUsage(); // measure at the start to exclude GC effect
+  const memStart = process.memoryUsage(); // measure at the start to exclude GC effect
   const t0 = performance.now();
 
   const create = await fetch(`${API}/api/documents/batch`, {
@@ -28,7 +28,7 @@ async function main() {
 
   const t1 = performance.now();
   const cpu = process.cpuUsage(cpuStart);
-  const memEnd = process.memoryUsage();
+  const memEnd = process.memoryUsage(); // measure at the end to include GC effect
 
   const completed = last.documents.filter(
     (d) => d.status === "completed",
@@ -39,8 +39,8 @@ async function main() {
     batchId,
     status: last.status,
     durationSec,
-    docs: { total: last.total, completed, failed: last.failed },
-    docsPerSec: completed / durationSec,
+    documents: { total: last.total, completed, failed: last.failed },
+    documentsPerSec: completed / durationSec,
     cpuUserMs: cpu.user / 1000,
     cpuSystemMs: cpu.system / 1000,
     memStart,

@@ -10,25 +10,59 @@ export function createApp() {
 
   app.use(documentsRoutes());
 
-  // app.use(healthRoutes());
-  // app.use(metricsRoutes());
+  app.use(healthRoutes());
+  app.use(metricsRoutes());
 
   // OpenAPI minimal: pour rester simple => JSON statique
-  // app.get("/api/openapi.json", (_req, res) => {
-  //   res.json({
-  //     openapi: "3.0.3",
-  //     info: { title: "DocGen API", version: "1.0.0" },
-  //     paths: {
-  //       "/api/documents/batch": { post: { summary: "Create 1000 docs batch" } },
-  //       "/api/documents/batch/{batchId}": {
-  //         get: { summary: "Get batch status" },
-  //       },
-  //       "/api/documents/{documentId}": { get: { summary: "Get PDF" } },
-  //       "/health": { get: { summary: "Health check" } },
-  //       "/metrics": { get: { summary: "Prometheus metrics" } },
-  //     },
-  //   });
-  // });
+  app.get("/api/openapi.json", (_req, res) => {
+    res.json({
+      openapi: "3.0.3",
+      info: { title: "Doc-service API", version: "1.0.0" },
+      paths: {
+        "/api/documents/batch": {
+          post: {
+            summary: "Create 1000 docs batch",
+            requestBody: {
+              content: {
+                "application/json": {
+                  schema: { type: "array", items: { type: "string" } },
+                  example: ["user-1", "user-2", "user-3"],
+                },
+              },
+            },
+          },
+        },
+        "/api/documents/batch/{batchId}": {
+          get: {
+            summary: "Get batch status",
+            parameters: [
+              {
+                name: "batchId",
+                in: "path",
+                required: true,
+                schema: { type: "string" },
+              },
+            ],
+          },
+        },
+        "/api/documents/{documentId}": {
+          get: {
+            summary: "Get PDF",
+            parameters: [
+              {
+                name: "documentId",
+                in: "path",
+                required: true,
+                schema: { type: "string" },
+              },
+            ],
+          },
+        },
+        "/health": { get: { summary: "Health check " } },
+        "/metrics": { get: { summary: "Prometheus metrics" } },
+      },
+    });
+  });
 
   // error handler
   app.use((err: any, _req: any, res: any, _next: any) => {

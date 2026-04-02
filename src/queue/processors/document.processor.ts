@@ -8,15 +8,15 @@ import {
   batchProcessingDuration,
 } from "../../metrics/prometheus";
 import { tryFinalizeBatch } from "../../services/batch.service";
-import { Document } from "../../models/document.model";
 import { Batch } from "../../models/batch.model";
+import { ObjectId } from "mongodb";
 
 const breaker = new CircuitBreaker({
   failureThreshold: 5,
   halfOpenAfterMs: 5000,
 });
 
-async function callDocuSignSim(userId: string) {
+async function callDocuSignSimulation(userId: string) {
   const latency = Number(process.env.DOCUSIGN_LATENCY_MS ?? "80");
   const failRate = Number(process.env.DOCUSIGN_FAIL_RATE ?? "0.02");
 
@@ -25,6 +25,7 @@ async function callDocuSignSim(userId: string) {
   return { ok: true };
 }
 
+// This processor is meant to simulate a CPU intensive PDF generation task, with an external API call dependency
 export async function processDocument(job: {
   batchId: string;
   documentId: string;
@@ -36,27 +37,26 @@ export async function processDocument(job: {
   const meta = { batchId, documentId, userId };
 
   await getDb()
-    .collection<Document>("documents")
+    .collection("documents")
     .updateOne(
-      { _id: documentId },
+      { _id: new ObjectId(documentId) },
       { $set: { status: "processing", updatedAt: new Date() } },
     );
-
   try {
-    await breaker.exec(() => callDocuSignSim(userId));
+    await breaker.exec(() => callDocuSignSimulation(userId));
 
     const pdfTimeout = Number(process.env.PDF_TIMEOUT_MS ?? "5000");
     const pdfBytes = await generatePdfBytes(
-      { userId, template: "cerfa_v1" },
+      { userId, template: "v1" },
       pdfTimeout,
     );
 
     const gridFsFileId = await savePdf(documentId, pdfBytes);
 
     await getDb()
-      .collection<Document>("documents")
+      .collection("documents")
       .updateOne(
-        { _id: documentId },
+        { _id: new ObjectId(documentId) },
         { $set: { status: "completed", gridFsFileId, updatedAt: new Date() } },
       );
 
@@ -73,9 +73,9 @@ export async function processDocument(job: {
     const err = String(e);
 
     await getDb()
-      .collection<Document>("documents")
+      .collection("documents")
       .updateOne(
-        { _id: documentId },
+        { _id: new ObjectId(documentId) },
         { $set: { status: "failed", error: err, updatedAt: new Date() } },
       );
 

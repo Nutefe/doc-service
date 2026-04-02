@@ -1,7 +1,7 @@
 import { getDb } from "../infra/mongodb";
 import { Batch } from "../models/batch.model";
 import { enqueue } from "../queue/queue";
-import { Document, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 
 const nanoid = require("nanoid").nanoid;
 
@@ -30,11 +30,7 @@ export async function createBatch(userIds: string[], requestId: string) {
     updatedAt: now,
   }));
 
-  const result = await getDb()
-    .collection<Document>("documents")
-    .insertMany(docs);
-
-  console.log(`result ${JSON.stringify(result)}`);
+  await getDb().collection("documents").insertMany(docs);
 
   await Promise.all(
     docs.map((d) =>
@@ -53,7 +49,7 @@ export async function getBatch(batchId: string) {
     throw Object.assign(new Error("batch_not_found"), { statusCode: 404 });
 
   const documents = await getDb()
-    .collection<Document>("documents")
+    .collection("documents")
     .find({ batchId })
     .project({ _id: 1, userId: 1, status: 1, error: 1 })
     .toArray();
@@ -70,16 +66,16 @@ export async function getBatch(batchId: string) {
 
 export async function tryFinalizeBatch(batchId: string) {
   const b = await getDb()
-    .collection<Batch>("batches")
-    .findOne({ _id: batchId });
+    .collection("batches")
+    .findOne({ _id: new ObjectId(batchId) });
   if (!b) return;
 
   if (b.completed + b.failed >= b.total) {
     const status = b.failed > 0 ? "failed" : "completed";
     await getDb()
-      .collection<Batch>("batches")
+      .collection("batches")
       .updateOne(
-        { _id: batchId },
+        { _id: new ObjectId(batchId) },
         { $set: { status, finishedAt: new Date(), updatedAt: new Date() } },
       );
   }

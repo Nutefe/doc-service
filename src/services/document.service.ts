@@ -5,10 +5,9 @@ import { Document } from "../models/document.model";
 
 export async function streamPdf(documentId: string) {
   const doc = await getDb()
-    .collection<Document>("documents")
-    .findOne({ _id: documentId });
+    .collection("documents")
+    .findOne({ _id: new ObjectId(documentId) });
 
-  console.log(doc);
 
   if (!doc)
     throw Object.assign(new Error("document_not_found"), { statusCode: 404 });

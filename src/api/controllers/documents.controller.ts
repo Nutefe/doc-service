@@ -31,6 +31,7 @@ export async function getBatchStatus(req: Request, res: Response) {
 
 export async function getDocumentPdf(req: Request, res: Response) {
   const s = await streamPdf(req.params.documentId as string);
+
   res.setHeader("content-type", "application/pdf");
   s.pipe(res);
 }

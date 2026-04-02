@@ -15,7 +15,9 @@ let memoryMode = false;
 // fallback memory queue
 const mem: GenerateJob[] = [];
 let memHandler: ((job: GenerateJob) => Promise<void>) | null = null;
+// to avoid parallel execution in memory mode which can cause race conditions
 let memRunning = 0;
+// concurrency in memory mode, can be configured with QUEUE_CONCURRENCY env var
 let memConcurrency = 10;
 
 export async function initQueue(redisUrl: string, concurrency: number) {
